@@ -75,19 +75,30 @@ require "includes/db.php";
 // open database
 $db = open_sqlite_db("secure/site.sqlite");
 
-// query grades table
-$result = exec_sql_query($db, "SELECT * FROM grades;");
-$records = $result->fetchAll();
-
 // Did the user submit the form?
 if (isset($_POST["request-insert"])) {
 
   $form_values["class_num"] = $_POST["course"]; // untrusted
   $form_values["term"]      = (int)$_POST["term"]; // untrusted
   $form_values["year"]      = (int)$_POST["year"]; // untrusted
-  $form_values["grade"]     = $_POST["grade"]; // untrusted
+  $form_values["grade"]     = ($_POST["grade"] == '' ? NULL : $_POST["grade"]); // untrusted
 
+  // SQL query to insert new record
+  $insert_result = exec_sql_query (
+    $db,
+    "INSERT INTO grades (class_num, term, acad_year, grade) VALUES (:class, :term, :year, :grade);",
+    array (
+      ':class' => $form_values["class_num"],
+      ':term' => $form_values["term"],
+      ':year' => $form_values["year"],
+      ':grade' => $form_values["grade"]
+  ));
 }
+
+// query grades table (so the database updates after you insert a new record!)
+$result = exec_sql_query($db, "SELECT * FROM grades;");
+$records = $result->fetchAll();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
